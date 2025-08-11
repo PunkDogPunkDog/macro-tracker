@@ -62,31 +62,75 @@
   <button onclick="resetDay()">🔄 Reset Day</button>
 
   <script>
-    let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  let targets = { calories: "", protein: "", carbs: "", fat: "" };
 
-    function updateDisplay() {
-      document.getElementById('totals').innerHTML = `
-        Calories: ${totals.calories}<br>
-        Protein: ${totals.protein}g<br>
-        Carbs: ${totals.carbs}g<br>
-        Fat: ${totals.fat}g
-      `;
-    }
+  function loadData() {
+    const savedTotals = localStorage.getItem("macroTotals");
+    const savedTargets = localStorage.getItem("macroTargets");
 
-    function addIntake() {
-      totals.calories += Number(document.getElementById('addCalories').value) || 0;
-      totals.protein += Number(document.getElementById('addProtein').value) || 0;
-      totals.carbs += Number(document.getElementById('addCarbs').value) || 0;
-      totals.fat += Number(document.getElementById('addFat').value) || 0;
-      updateDisplay();
-    }
-
-    function resetDay() {
-      totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-      updateDisplay();
+    if (savedTotals) totals = JSON.parse(savedTotals);
+    if (savedTargets) {
+      targets = JSON.parse(savedTargets);
+      document.getElementById("targetCalories").value = targets.calories;
+      document.getElementById("targetProtein").value = targets.protein;
+      document.getElementById("targetCarbs").value = targets.carbs;
+      document.getElementById("targetFat").value = targets.fat;
     }
 
     updateDisplay();
-  </script>
+  }
+
+  function saveTotals() {
+    localStorage.setItem("macroTotals", JSON.stringify(totals));
+  }
+
+  function saveTargets() {
+    targets.calories = document.getElementById("targetCalories").value;
+    targets.protein = document.getElementById("targetProtein").value;
+    targets.carbs = document.getElementById("targetCarbs").value;
+    targets.fat = document.getElementById("targetFat").value;
+    localStorage.setItem("macroTargets", JSON.stringify(targets));
+  }
+
+  function updateDisplay() {
+    document.getElementById('totals').innerHTML = `
+      Calories: ${totals.calories}<br>
+      Protein: ${totals.protein}g<br>
+      Carbs: ${totals.carbs}g<br>
+      Fat: ${totals.fat}g
+    `;
+  }
+
+  function addIntake() {
+    totals.calories += Number(document.getElementById('addCalories').value) || 0;
+    totals.protein += Number(document.getElementById('addProtein').value) || 0;
+    totals.carbs += Number(document.getElementById('addCarbs').value) || 0;
+    totals.fat += Number(document.getElementById('addFat').value) || 0;
+    saveTotals();
+    updateDisplay();
+  }
+
+  function resetDay() {
+    totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    targets = { calories: "", protein: "", carbs: "", fat: "" };
+    localStorage.removeItem("macroTotals");
+    localStorage.removeItem("macroTargets");
+    document.getElementById("targetCalories").value = "";
+    document.getElementById("targetProtein").value = "";
+    document.getElementById("targetCarbs").value = "";
+    document.getElementById("targetFat").value = "";
+    updateDisplay();
+  }
+
+  // Save targets whenever they change
+  document.addEventListener("DOMContentLoaded", () => {
+    ["targetCalories", "targetProtein", "targetCarbs", "targetFat"].forEach(id => {
+      document.getElementById(id).addEventListener("input", saveTargets);
+    });
+    loadData();
+  });
+</script>
+
 </body>
 </html>
