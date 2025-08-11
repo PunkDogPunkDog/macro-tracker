@@ -86,7 +86,6 @@
     if (savedTotals) totals = JSON.parse(savedTotals);
     if (savedTargets) targets = JSON.parse(savedTargets);
 
-    // Populate target fields
     document.getElementById("targetCalories").value = targets.calories || "";
     document.getElementById("targetProtein").value = targets.protein || "";
     document.getElementById("targetCarbs").value = targets.carbs || "";
@@ -99,20 +98,22 @@
     localStorage.setItem("macroTotals", JSON.stringify(totals));
   }
 
-  function saveTargets() {
+  function setTargets() {
     targets.calories = document.getElementById("targetCalories").value;
     targets.protein = document.getElementById("targetProtein").value;
     targets.carbs = document.getElementById("targetCarbs").value;
     targets.fat = document.getElementById("targetFat").value;
     localStorage.setItem("macroTargets", JSON.stringify(targets));
+    updateDisplay();
   }
 
   function updateDisplay() {
-    document.getElementById('totals').innerHTML = `
-      Calories: ${totals.calories}<br>
-      Protein: ${totals.protein}g<br>
-      Carbs: ${totals.carbs}g<br>
-      Fat: ${totals.fat}g
+    document.getElementById('totalsDisplay').innerHTML = `
+      <h3>Today's Intake</h3>
+      Calories: ${totals.calories} / ${targets.calories || "—"}<br>
+      Protein: ${totals.protein}g / ${targets.protein || "—"}g<br>
+      Carbs: ${totals.carbs}g / ${targets.carbs || "—"}g<br>
+      Fat: ${totals.fat}g / ${targets.fat || "—"}g
     `;
   }
 
@@ -139,15 +140,9 @@
     updateDisplay();
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    loadData();
-
-    // Save targets on input
-    ["targetCalories", "targetProtein", "targetCarbs", "targetFat"].forEach(id => {
-      document.getElementById(id).addEventListener("input", saveTargets);
-    });
-  });
+  document.addEventListener("DOMContentLoaded", loadData);
 </script>
+
 
 
 </body>
