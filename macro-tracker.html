@@ -66,20 +66,20 @@
   let targets = { calories: "", protein: "", carbs: "", fat: "" };
 
   function loadData() {
-    const savedTotals = localStorage.getItem("macroTotals");
-    const savedTargets = localStorage.getItem("macroTargets");
+  const savedTotals = localStorage.getItem("macroTotals");
+  const savedTargets = localStorage.getItem("macroTargets");
 
-    if (savedTotals) totals = JSON.parse(savedTotals);
-    if (savedTargets) {
-      targets = JSON.parse(savedTargets);
-      document.getElementById("targetCalories").value = targets.calories;
-      document.getElementById("targetProtein").value = targets.protein;
-      document.getElementById("targetCarbs").value = targets.carbs;
-      document.getElementById("targetFat").value = targets.fat;
-    }
-
-    updateDisplay();
+  if (savedTotals) totals = JSON.parse(savedTotals);
+  if (savedTargets) {
+    targets = JSON.parse(savedTargets);
+    document.getElementById("targetCalories").value = targets.calories || "";
+    document.getElementById("targetProtein").value = targets.protein || "";
+    document.getElementById("targetCarbs").value = targets.carbs || "";
+    document.getElementById("targetFat").value = targets.fat || "";
   }
+
+  updateDisplay();
+}
 
   function saveTotals() {
     localStorage.setItem("macroTotals", JSON.stringify(totals));
@@ -125,11 +125,15 @@
 
   // Save targets whenever they change
   document.addEventListener("DOMContentLoaded", () => {
-    ["targetCalories", "targetProtein", "targetCarbs", "targetFat"].forEach(id => {
-      document.getElementById(id).addEventListener("input", saveTargets);
+  ["targetCalories", "targetProtein", "targetCarbs", "targetFat"].forEach(id => {
+    const input = document.getElementById(id);
+    input.addEventListener("input", () => {
+      targets[id.replace("target", "").toLowerCase()] = input.value;
+      localStorage.setItem("macroTargets", JSON.stringify(targets));
     });
-    loadData();
   });
+  loadData();
+});
 </script>
 
 </body>
