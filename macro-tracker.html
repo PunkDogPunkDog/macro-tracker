@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Macro Tracker</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    input {
+      width: 90px;
+      margin: 5px 10px 5px 0;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎯 Macro Targets</h2>
+  <div class="section">
+    <div class="row">
+      Calories: <input id="targetCalories" type="number">
+      Protein: <input id="targetProtein" type="number">
+    </div>
+    <div class="row">
+      Carbs: <input id="targetCarbs" type="number">
+      Fat: <input id="targetFat" type="number">
+    </div>
+  </div>
+
+  <h2>📈 Running Totals</h2>
+  <div class="section" id="totals">
+    Calories: 0<br>
+    Protein: 0g<br>
+    Carbs: 0g<br>
+    Fat: 0g
+  </div>
+
+  <h2>➕ Add Intake</h2>
+  <div class="section">
+    <div class="row">
+      Calories: <input id="addCalories" type="number">
+      Protein: <input id="addProtein" type="number">
+    </div>
+    <div class="row">
+      Carbs: <input id="addCarbs" type="number">
+      Fat: <input id="addFat" type="number">
+      <button onclick="addIntake()">Add</button>
+    </div>
+  </div>
+
+  <button onclick="resetDay()">🔄 Reset Day</button>
+
+  <script>
+    let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
+    function updateDisplay() {
+      document.getElementById('totals').innerHTML = `
+        Calories: ${totals.calories}<br>
+        Protein: ${totals.protein}g<br>
+        Carbs: ${totals.carbs}g<br>
+        Fat: ${totals.fat}g
+      `;
+    }
+
+    function addIntake() {
+      totals.calories += Number(document.getElementById('addCalories').value) || 0;
+      totals.protein += Number(document.getElementById('addProtein').value) || 0;
+      totals.carbs += Number(document.getElementById('addCarbs').value) || 0;
+      totals.fat += Number(document.getElementById('addFat').value) || 0;
+      updateDisplay();
+    }
+
+    function resetDay() {
+      totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+      updateDisplay();
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>
