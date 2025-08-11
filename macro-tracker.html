@@ -61,25 +61,25 @@
 
   <button onclick="resetDay()">🔄 Reset Day</button>
 
-  <script>
+<script>
   let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
   let targets = { calories: "", protein: "", carbs: "", fat: "" };
 
   function loadData() {
-  const savedTotals = localStorage.getItem("macroTotals");
-  const savedTargets = localStorage.getItem("macroTargets");
+    const savedTotals = localStorage.getItem("macroTotals");
+    const savedTargets = localStorage.getItem("macroTargets");
 
-  if (savedTotals) totals = JSON.parse(savedTotals);
-  if (savedTargets) {
-    targets = JSON.parse(savedTargets);
+    if (savedTotals) totals = JSON.parse(savedTotals);
+    if (savedTargets) targets = JSON.parse(savedTargets);
+
+    // Populate target fields
     document.getElementById("targetCalories").value = targets.calories || "";
     document.getElementById("targetProtein").value = targets.protein || "";
     document.getElementById("targetCarbs").value = targets.carbs || "";
     document.getElementById("targetFat").value = targets.fat || "";
-  }
 
-  updateDisplay();
-}
+    updateDisplay();
+  }
 
   function saveTotals() {
     localStorage.setItem("macroTotals", JSON.stringify(totals));
@@ -116,25 +116,25 @@
     targets = { calories: "", protein: "", carbs: "", fat: "" };
     localStorage.removeItem("macroTotals");
     localStorage.removeItem("macroTargets");
+
     document.getElementById("targetCalories").value = "";
     document.getElementById("targetProtein").value = "";
     document.getElementById("targetCarbs").value = "";
     document.getElementById("targetFat").value = "";
+
     updateDisplay();
   }
 
-  // Save targets whenever they change
   document.addEventListener("DOMContentLoaded", () => {
-  ["targetCalories", "targetProtein", "targetCarbs", "targetFat"].forEach(id => {
-    const input = document.getElementById(id);
-    input.addEventListener("input", () => {
-      targets[id.replace("target", "").toLowerCase()] = input.value;
-      localStorage.setItem("macroTargets", JSON.stringify(targets));
+    loadData();
+
+    // Save targets on input
+    ["targetCalories", "targetProtein", "targetCarbs", "targetFat"].forEach(id => {
+      document.getElementById(id).addEventListener("input", saveTargets);
     });
   });
-  loadData();
-});
 </script>
+
 
 </body>
 </html>
