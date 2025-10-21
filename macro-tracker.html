@@ -3,38 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <title>Macro Tracker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-    input, select, button { margin: 5px 0; width: 100%; padding: 8px; }
-    hr { margin: 20px 0; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+      font-size: 18px;
+    }
+    input, select, button {
+      font-size: 18px;
+      margin: 5px 0;
+      width: 100%;
+      padding: 10px;
+    }
+    hr {
+      margin: 20px 0;
+    }
   </style>
 </head>
 <body>
 
-  <h2>Macro Target Generator</h2>
-  <select id="phase">
-    <option value="none">None</option>
-    <option value="explonic">Explonic</option>
-    <option value="adaptive">Adaptive</option>
-    <option value="negative">Negative</option>
-  </select>
+  <h2>Macro Tracker</h2>
 
-  <input type="number" id="milesBiked" placeholder="Miles biked">
-  <input type="checkbox" id="workDay"> Work day<br>
-  <input type="number" id="workoutCalories" placeholder="Workout calories burned">
-
-  <input type="number" id="weight" placeholder="Weight (lbs)">
-  <select id="goal">
-    <option value="maintain">Maintain</option>
-    <option value="gain">Gain</option>
-    <option value="cut">Cut</option>
-  </select>
-
-  <button onclick="generateTargets()">Generate Targets</button>
+  <button onclick="resetTotals()">Reset Totals</button>
+  <button onclick="resetEverything()">Reset Everything</button>
 
   <hr>
 
@@ -58,9 +52,6 @@
   Carbs: <input type="number" id="addCarbs"><br>
   Fat: <input type="number" id="addFat"><br>
   <button onclick="addIntake()">Add</button>
-
-  <hr>
-  <button onclick="resetDay()">Reset Day</button>
 
   <script>
     let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
@@ -94,56 +85,6 @@
       updateDisplay();
     }
 
-    function generateTargets() {
-      const weight = Number(document.getElementById("weight").value);
-      const miles = Number(document.getElementById("milesBiked").value);
-      const workDay = document.getElementById("workDay").checked;
-      const workoutCalories = Number(document.getElementById("workoutCalories").value) || 0;
-      const phase = document.getElementById("phase").value;
-      const goal = document.getElementById("goal").value;
-
-      const bmr = weight * 10;
-      let multiplier = 1.2;
-      multiplier += (miles / 5) * 0.05;
-      if (workDay) multiplier += 0.25;
-
-      let calorieMod = 1;
-      let proteinMod = 1;
-      let fatMod = 1;
-
-      if (phase === "explonic") {
-        calorieMod = 1.1;
-        proteinMod = 1.15;
-      } else if (phase === "adaptive") {
-        calorieMod = 1.05;
-        proteinMod = 1.1;
-      } else if (phase === "negative") {
-        calorieMod = 1.05;
-        proteinMod = 1.15;
-        fatMod = 1.1;
-      }
-
-      let macroSplit;
-      if (goal === "gain") {
-        macroSplit = { carbs: 0.45, protein: 0.35, fat: 0.2 };
-      } else if (goal === "cut") {
-        macroSplit = { carbs: 0.3, protein: 0.4, fat: 0.3 };
-      } else {
-        macroSplit = { carbs: 0.4, protein: 0.3, fat: 0.3 };
-      }
-
-      const baseCalories = Math.round(bmr * multiplier * calorieMod);
-      const calories = baseCalories + workoutCalories;
-
-      const protein = Math.round((calories * macroSplit.protein * proteinMod) / 4);
-      const carbs = Math.round((calories * macroSplit.carbs) / 4);
-      const fat = Math.round((calories * macroSplit.fat * fatMod) / 9);
-
-      targets = { calories, protein, carbs, fat };
-      localStorage.setItem("macroTargets", JSON.stringify(targets));
-      updateDisplay();
-    }
-
     function updateDisplay() {
       document.getElementById('totalsDisplay').innerHTML = `
         Calories: ${totals.calories} / ${targets.calories || "—"}<br>
@@ -162,7 +103,13 @@
       updateDisplay();
     }
 
-    function resetDay() {
+    function resetTotals() {
+      totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+      localStorage.setItem("macroTotals", JSON.stringify(totals));
+      updateDisplay();
+    }
+
+    function resetEverything() {
       totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
       targets = { calories: "", protein: "", carbs: "", fat: "" };
       localStorage.removeItem("macroTotals");
