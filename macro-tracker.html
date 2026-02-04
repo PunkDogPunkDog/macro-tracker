@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Macro Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
   <style>
     body {
       font-family: sans-serif;
@@ -12,31 +13,59 @@
       margin: auto;
       font-size: 18px;
     }
-    input, select, button {
+
+    input, button {
       font-size: 18px;
-      margin: 5px 0;
+      margin: 6px 0;
       width: 100%;
       padding: 10px;
     }
+
+    .hydration-buttons button {
+      width: 30%;
+      margin: 5px 1%;
+      padding: 10px;
+      font-size: 18px;
+    }
+
     hr {
       margin: 20px 0;
     }
+
+    .bottom-buffer {
+      height: 200px;
+    }
+
+    #addButton.disabled {
+      background-color: #ccc;
+      color: #666;
+    }
   </style>
 </head>
+
 <body>
 
   <h2>Macro Tracker</h2>
 
-  <button onclick="resetTotals()">Reset Totals</button>
-  <button onclick="resetEverything()">Reset Everything</button>
+  <!-- Reset Buttons -->
+  <button onclick="confirmResetTotals()">Reset Totals</button>
+  <button onclick="confirmResetEverything()">Reset Everything</button>
+
+  <hr>
+
+  <!-- Medication Button -->
+  <button onclick="recordMeds()">Took Meds</button>
+  <div id="medsTimestamp" style="margin-top: 5px; font-size: 16px; color: #444;"></div>
 
   <hr>
 
   <h3>Set Daily Targets</h3>
-  Calories: <input type="number" id="targetCalories"><br>
-  Protein (g): <input type="number" id="targetProtein"><br>
-  Carbs (g): <input type="number" id="targetCarbs"><br>
-  Fat (g): <input type="number" id="targetFat"><br>
+  Calories: <input type="number" id="targetCalories">
+  Protein (g): <input type="number" id="targetProtein">
+  Carbs (g): <input type="number" id="targetCarbs">
+  Fat (g): <input type="number" id="targetFat">
+  Hydration (oz): <input type="number" id="targetHydration">
+
   <button onclick="setTargets()">Set Targets</button>
 
   <hr>
@@ -47,27 +76,48 @@
   <hr>
 
   <h3>Add Intake</h3>
-  Calories: <input type="number" id="addCalories"><br>
-  Protein: <input type="number" id="addProtein"><br>
-  Carbs: <input type="number" id="addCarbs"><br>
-  Fat: <input type="number" id="addFat"><br>
-  <button onclick="addIntake()">Add</button>
+  Calories: <input type="number" id="addCalories">
+  Protein: <input type="number" id="addProtein">
+  Carbs: <input type="number" id="addCarbs">
+  Fat: <input type="number" id="addFat">
+
+  <button id="addButton" onclick="addIntake()">Add</button>
+
+  <hr>
+
+  <h3>Hydration</h3>
+  <div class="hydration-buttons">
+    <button onclick="addHydration(8)">8 oz</button>
+    <button onclick="addHydration(12)">12 oz</button>
+    <button onclick="addHydration(16)">16 oz</button>
+    <button onclick="addHydration(18)">18 oz</button>
+    <button onclick="addHydration(20)">20 oz</button>
+  </div>
+
+  <div class="bottom-buffer"></div>
 
   <script>
-    let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-    let targets = { calories: "", protein: "", carbs: "", fat: "" };
+    let totals = { calories: 0, protein: 0, carbs: 0, fat: 0, hydration: 0 };
+    let targets = { calories: "", protein: "", carbs: "", fat: "", hydration: "" };
+    let medsTimestamp = "";
 
     function loadData() {
       const savedTotals = localStorage.getItem("macroTotals");
       const savedTargets = localStorage.getItem("macroTargets");
+      const savedMeds = localStorage.getItem("medsTimestamp");
 
       if (savedTotals) totals = JSON.parse(savedTotals);
       if (savedTargets) targets = JSON.parse(savedTargets);
+      if (savedMeds) medsTimestamp = savedMeds;
 
       document.getElementById("targetCalories").value = targets.calories || "";
       document.getElementById("targetProtein").value = targets.protein || "";
       document.getElementById("targetCarbs").value = targets.carbs || "";
       document.getElementById("targetFat").value = targets.fat || "";
+      document.getElementById("targetHydration").value = targets.hydration || "";
+
+      document.getElementById("medsTimestamp").innerText =
+        medsTimestamp ? `Last taken: ${medsTimestamp}` : "";
 
       updateDisplay();
     }
@@ -81,37 +131,74 @@
       targets.protein = document.getElementById("targetProtein").value;
       targets.carbs = document.getElementById("targetCarbs").value;
       targets.fat = document.getElementById("targetFat").value;
+      targets.hydration = document.getElementById("targetHydration").value;
+
       localStorage.setItem("macroTargets", JSON.stringify(targets));
       updateDisplay();
     }
 
     function updateDisplay() {
-      document.getElementById('totalsDisplay').innerHTML = `
+      document.getElementById("totalsDisplay").innerHTML = `
         Calories: ${totals.calories} / ${targets.calories || "—"}<br>
         Protein: ${totals.protein}g / ${targets.protein || "—"}g<br>
         Carbs: ${totals.carbs}g / ${targets.carbs || "—"}g<br>
-        Fat: ${totals.fat}g / ${targets.fat || "—"}g
+        Fat: ${totals.fat}g / ${targets.fat || "—"}g<br>
+        Hydration: ${totals.hydration} oz / ${targets.hydration || "—"} oz
       `;
     }
 
     function addIntake() {
-      totals.calories += Number(document.getElementById('addCalories').value) || 0;
-      totals.protein += Number(document.getElementById('addProtein').value) || 0;
-      totals.carbs += Number(document.getElementById('addCarbs').value) || 0;
-      totals.fat += Number(document.getElementById('addFat').value) || 0;
+      const addButton = document.getElementById("addButton");
+
+      // Disable button temporarily
+      addButton.disabled = true;
+      addButton.classList.add("disabled");
+
+      setTimeout(() => {
+        addButton.disabled = false;
+        addButton.classList.remove("disabled");
+      }, 2500);
+
+      totals.calories += Number(document.getElementById("addCalories").value) || 0;
+      totals.protein += Number(document.getElementById("addProtein").value) || 0;
+      totals.carbs += Number(document.getElementById("addCarbs").value) || 0;
+      totals.fat += Number(document.getElementById("addFat").value) || 0;
+
       saveTotals();
       updateDisplay();
     }
 
+    function addHydration(amount) {
+      totals.hydration += amount;
+      saveTotals();
+      updateDisplay();
+    }
+
+    function recordMeds() {
+      const now = new Date();
+      medsTimestamp = now.toLocaleString();
+      localStorage.setItem("medsTimestamp", medsTimestamp);
+      document.getElementById("medsTimestamp").innerText = `Last taken: ${medsTimestamp}`;
+    }
+
+    function confirmResetTotals() {
+      if (confirm("Reset today's totals?")) resetTotals();
+    }
+
+    function confirmResetEverything() {
+      if (confirm("Reset ALL data (totals + targets)?")) resetEverything();
+    }
+
     function resetTotals() {
-      totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+      totals = { calories: 0, protein: 0, carbs: 0, fat: 0, hydration: 0 };
       localStorage.setItem("macroTotals", JSON.stringify(totals));
       updateDisplay();
     }
 
     function resetEverything() {
-      totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-      targets = { calories: "", protein: "", carbs: "", fat: "" };
+      totals = { calories: 0, protein: 0, carbs: 0, fat: 0, hydration: 0 };
+      targets = { calories: "", protein: "", carbs: "", fat: "", hydration: "" };
+
       localStorage.removeItem("macroTotals");
       localStorage.removeItem("macroTargets");
 
@@ -119,11 +206,13 @@
       document.getElementById("targetProtein").value = "";
       document.getElementById("targetCarbs").value = "";
       document.getElementById("targetFat").value = "";
+      document.getElementById("targetHydration").value = "";
 
       updateDisplay();
     }
 
     document.addEventListener("DOMContentLoaded", loadData);
   </script>
+
 </body>
 </html>
