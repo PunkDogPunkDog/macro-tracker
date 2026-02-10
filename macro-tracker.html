@@ -40,6 +40,21 @@
       background-color: #ccc;
       color: #666;
     }
+
+    .weight-display {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+
+    .trend-positive {
+      color: #d9534f;
+    }
+
+    .trend-negative {
+      color: #5cb85c;
+    }
   </style>
 </head>
 
@@ -75,6 +90,13 @@
 
   <hr>
 
+  <h3>Weight Log</h3>
+  Today's Weight (lbs): <input type="number" step="0.1" id="todayWeight">
+  <button onclick="logWeight()">Log Weight</button>
+  <div class="weight-display" id="weightDisplay"></div>
+
+  <hr>
+
   <h3>Add Intake</h3>
   Calories: <input type="number" id="addCalories">
   Protein: <input type="number" id="addProtein">
@@ -100,15 +122,18 @@
     let totals = { calories: 0, protein: 0, carbs: 0, fat: 0, hydration: 0 };
     let targets = { calories: "", protein: "", carbs: "", fat: "", hydration: "" };
     let medsTimestamp = "";
+    let weightLog = {};
 
     function loadData() {
       const savedTotals = localStorage.getItem("macroTotals");
       const savedTargets = localStorage.getItem("macroTargets");
       const savedMeds = localStorage.getItem("medsTimestamp");
+      const savedWeights = localStorage.getItem("weightLog");
 
       if (savedTotals) totals = JSON.parse(savedTotals);
       if (savedTargets) targets = JSON.parse(savedTargets);
       if (savedMeds) medsTimestamp = savedMeds;
+      if (savedWeights) weightLog = JSON.parse(savedWeights);
 
       document.getElementById("targetCalories").value = targets.calories || "";
       document.getElementById("targetProtein").value = targets.protein || "";
@@ -119,11 +144,35 @@
       document.getElementById("medsTimestamp").innerText =
         medsTimestamp ? `Last taken: ${medsTimestamp}` : "";
 
+      // Load today's weight if exists
+      const today = getTodayDate();
+      if (weightLog[today]) {
+        document.getElementById("todayWeight").value = weightLog[today];
+      }
+
       updateDisplay();
+      updateWeightDisplay();
     }
 
     function saveTotals() {
       localStorage.setItem("macroTotals", JSON.stringify(totals));
+    }
+
+    function saveWeightLog() {
+      // Keep only last 30 days to avoid bloat
+      const dates = Object.keys(weightLog).sort();
+      if (dates.length > 30) {
+        const toKeep = dates.slice(-30);
+        const newLog = {};
+        toKeep.forEach(date => newLog[date] = weightLog[date]);
+        weightLog = newLog;
+      }
+      localStorage.setItem("weightLog", JSON.stringify(weightLog));
+    }
+
+    function getTodayDate() {
+      const now = new Date();
+      return now.toISOString().split('T')[0]; // YYYY-MM-DD
     }
 
     function setTargets() {
@@ -145,6 +194,58 @@
         Fat: ${totals.fat}g / ${targets.fat || "—"}g<br>
         Hydration: ${totals.hydration} oz / ${targets.hydration || "—"} oz
       `;
+    }
+
+    function logWeight() {
+      const weight = parseFloat(document.getElementById("todayWeight").value);
+      if (!weight || weight <= 0) {
+        alert("Please enter a valid weight");
+        return;
+      }
+
+      const today = getTodayDate();
+      weightLog[today] = weight;
+      saveWeightLog();
+      updateWeightDisplay();
+    }
+
+    function updateWeightDisplay() {
+      const today = getTodayDate();
+      const todayWeight = weightLog[today];
+
+      let displayHTML = "";
+
+      if (todayWeight) {
+        displayHTML += `<strong>Today:</strong> ${todayWeight} lbs<br>`;
+      } else {
+        displayHTML += `<em>No weight logged today</em><br>`;
+      }
+
+      // Calculate 7-day average (current week)
+      const dates = Object.keys(weightLog).sort();
+      const last7 = dates.slice(-7);
+      
+      if (last7.length > 0) {
+        const last7Weights = last7.map(date => weightLog[date]);
+        const avg7 = (last7Weights.reduce((a, b) => a + b, 0) / last7Weights.length).toFixed(1);
+        displayHTML += `<strong>7-Day Average:</strong> ${avg7} lbs<br>`;
+
+        // Calculate previous 7-day average for comparison
+        if (dates.length >= 14) {
+          const prev7 = dates.slice(-14, -7);
+          const prev7Weights = prev7.map(date => weightLog[date]);
+          const avgPrev7 = (prev7Weights.reduce((a, b) => a + b, 0) / prev7Weights.length).toFixed(1);
+          
+          const trend = (avg7 - avgPrev7).toFixed(1);
+          const trendClass = trend > 0 ? "trend-positive" : "trend-negative";
+          const trendSymbol = trend > 0 ? "+" : "";
+          
+          displayHTML += `<strong>Previous Week:</strong> ${avgPrev7} lbs<br>`;
+          displayHTML += `<strong>Week-over-Week:</strong> <span class="${trendClass}">${trendSymbol}${trend} lbs</span>`;
+        }
+      }
+
+      document.getElementById("weightDisplay").innerHTML = displayHTML || "<em>Start logging weight to see trends</em>";
     }
 
     function addIntake() {
@@ -186,7 +287,7 @@
     }
 
     function confirmResetEverything() {
-      if (confirm("Reset ALL data (totals + targets)?")) resetEverything();
+      if (confirm("Reset ALL data (totals + targets)? Weight log will be preserved.")) resetEverything();
     }
 
     function resetTotals() {
